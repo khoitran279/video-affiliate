@@ -19,7 +19,8 @@ Cấu hình (video.json), đường dẫn ảnh tính từ thư mục chứa fil
 }
 
 motion: zoom_in | zoom_out | pan_left | pan_right | pan_up | pan_down | still
-fit:    auto | cover | contain   (auto: ảnh nền trắng -> contain trên backdrop)
+fit:    auto | cover | contain | blur
+        (auto: nền trắng -> contain; ảnh vuông/ngang -> blur: giữ trọn ảnh trên nền mờ; ảnh dọc -> cover)
 text_style: title (serif, lớn vừa) | caption (sans mảnh, nhỏ) | price (sans, góc dưới)
 """
 import json
@@ -91,9 +92,24 @@ def build_base(path, fit, backdrop, grade_mode):
     bw, bh = int(W * OVERSCAN), int(H * OVERSCAN)
     img = ImageOps.exif_transpose(Image.open(path)).convert("RGB")
     if fit == "auto":
-        fit = "contain" if is_white_background(img) else "cover"
+        if is_white_background(img):
+            fit = "contain"
+        elif img.height / img.width < 1.4:  # ảnh vuông/ngang: giữ trọn ảnh, nền mờ
+            fit = "blur"
+        else:
+            fit = "cover"
     if fit == "cover":
         base = ImageOps.fit(img, (bw, bh), Image.LANCZOS)
+    elif fit == "blur":
+        # nền: chính ảnh đó phủ kín khung, làm mờ và tối nhẹ
+        base = ImageOps.fit(img, (bw, bh), Image.LANCZOS).filter(ImageFilter.GaussianBlur(40))
+        base = ImageEnhance.Brightness(base).enhance(0.72)
+        # ảnh gốc giữ trọn, rộng bằng khung hiển thị, đặt hơi cao hơn tâm (chừa chỗ cho chữ)
+        scale = min(W / img.width, (H * 0.62) / img.height)
+        full = img.resize((int(img.width * scale), int(img.height * scale)), Image.LANCZOS)
+        x = (bw - full.width) // 2
+        y = int(bh * 0.45) - full.height // 2
+        base.paste(full, (x, y))
     else:
         base = Image.new("RGB", (bw, bh), hex_rgb(backdrop))
         # sản phẩm chiếm ~72% chiều ngang khung hiển thị, đặt hơi cao hơn tâm
@@ -110,7 +126,9 @@ def build_base(path, fit, backdrop, grade_mode):
         sh = sh.filter(ImageFilter.GaussianBlur(28))
         base.paste(Image.new("RGB", sh.size, (70, 62, 55)), (x - pad, y - pad), sh)
         base.paste(prod, (x, y), mask)
-    return grade(base, grade_mode)
+    out = grade(base, grade_mode)
+    out.info["fit"] = fit
+    return out
 
 
 def text_layer(text, style, under=None):
@@ -215,6 +233,11 @@ def render(cfg_path):
     total = 0.0
     for i, sc in enumerate(scenes):
         base = build_base(os.path.join(root, sc["image"]), sc.get("fit", "auto"), backdrop, grade_mode)
+        motion = sc.get("motion", "zoom_in")
+        if base.info.get("fit") == "blur" and motion.startswith("pan"):
+            # ảnh giữ trọn trên nền mờ: lia sẽ đẩy ảnh đè lên chữ, nên đổi sang zoom
+            motion = "zoom_in" if motion in ("pan_up", "pan_left") else "zoom_out"
+        sc["motion"] = motion
         txt = text_layer(sc.get("text", ""), sc.get("text_style", "title" if i == 0 else "caption"),
                          under=frame_at(base, sc.get("motion", "zoom_in"), 0.5))
         n = max(1, round(sc.get("duration", 1.5) * fps))
