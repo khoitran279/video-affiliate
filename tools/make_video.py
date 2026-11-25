@@ -193,6 +193,17 @@ def render(cfg_path):
                        "fit": ec.get("fit", scenes[0].get("fit", "auto")),
                        "text_style": "caption"})
 
+    # Kéo giãn thời lượng các cảnh cho khớp giọng đọc (mặc định bật khi có audio)
+    audio = cfg.get("audio")
+    if audio and cfg.get("fit_to_audio", True):
+        dur = float(subprocess.check_output(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+             os.path.join(root, audio)]).decode().strip())
+        planned = sum(sc.get("duration", 1.5) for sc in scenes)
+        k = (dur + 0.6) / planned
+        for sc in scenes:
+            sc["duration"] = max(0.9, sc.get("duration", 1.5) * k)
+
     silent = out + ".silent.mp4"
     ff = subprocess.Popen(
         ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
@@ -230,7 +241,6 @@ def render(cfg_path):
     ff.stdin.close()
     ff.wait()
 
-    audio = cfg.get("audio")
     if audio:
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", silent, "-i", os.path.join(root, audio),
                         "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest", out], check=True)
