@@ -35,13 +35,20 @@ Mỗi video 5–8 cảnh, tổng khoảng 12–20 giây. Chọn 1 format:
 
 ## 4. Giọng đọc
 
-```
-generate_speech(model="speech/azure-neural", voice_id="vi-VN-HoaiMyNeural", text=<lời đọc>)
-check_job(job_id) → url (https://cdn.creativeclaw.co/...)
-curl -sSf -o voice.mp3 "<url>"
-```
+Theo thứ tự ưu tiên:
 
-Không tạo lại giọng cho cùng một lời đọc. Nếu lỗi, ghi R và bỏ qua dòng đó.
+1. **Có file âm thanh trong thư mục ảnh** (`voice.mp3`, `.m4a` hoặc `.wav`): tải về như ảnh và dùng luôn. Khi đó lời đọc là của chủ dự án; viết chữ trên hình cho khớp, không tạo giọng mới.
+2. **Google Cloud TTS** (miễn phí, không tốn credit), với giọng của kênh ghi trong `CLAUDE.md`:
+   ```
+   python3 <repo>/tools/tts_google.py say <giọng> voice.mp3 --text-file loi_doc.txt
+   ```
+3. **Dự phòng khi Google lỗi:** Creative Claw Azure HoaiMy (khoảng 1 credit):
+   ```
+   generate_speech(model="speech/azure-neural", voice_id="vi-VN-HoaiMyNeural", text=<lời đọc>)
+   check_job(job_id) → url;  curl -sSf -o voice.mp3 "<url>"
+   ```
+
+Không tạo lại giọng cho cùng một lời đọc. Nếu cả hai cách đều lỗi, ghi R và bỏ qua dòng đó.
 
 ## 5. Render
 
