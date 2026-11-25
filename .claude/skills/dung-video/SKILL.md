@@ -1,26 +1,59 @@
 ---
 name: dung-video
-description: Dựng video TikTok 9:16 cho các sản phẩm ở trạng thái "Đã chọn" trong Google Sheet affiliate: tải ảnh từ Drive, viết kịch bản, tạo giọng đọc, render bằng tools/make_video.py, tải video lên Drive, cập nhật Sheet. Dùng trong lần chạy hằng ngày hoặc khi được yêu cầu "dựng video".
+description: Quy trình 2 giai đoạn cho Google Sheet affiliate. Giai đoạn A viết lời đọc cho dòng "Đã chọn" và chuyển sang "Chờ giọng". Giai đoạn B, khi chủ dự án đã bỏ file âm thanh vào thư mục ảnh, dựng video 9:16 khớp giọng bằng tools/make_video.py, tải lên Drive, cập nhật Sheet. Dùng trong lần chạy hằng ngày hoặc khi được yêu cầu "viết lời đọc", "dựng video".
 ---
 
 # Dựng video
 
-Đọc `CLAUDE.md` ở gốc repo trước (ID, cột, gu hình ảnh, quy tắc pháp lý). Làm việc trong thư mục tạm của phiên, không ghi ảnh hay video vào repo.
+Đọc `CLAUDE.md` ở gốc repo trước (ID, cột A–S, gu hình ảnh, quy tắc pháp lý). Làm việc trong thư mục tạm của phiên, không ghi ảnh, âm thanh hay video vào repo.
 
-## 1. Chọn việc
+Đọc `'<tab>'!A1:S` của 3 tab (dải mở). Tối đa 3 video mỗi kênh mỗi lần chạy.
 
-Đọc `'<tab>'!A1:R` của 3 tab. Lấy các dòng M = `Đã chọn`, cột O có link thư mục. Tối đa 3 dòng mỗi kênh, ưu tiên điểm L cao. Dòng thiếu cột O: ghi R = "Cần thư mục ảnh", bỏ qua.
+## Cách lấy file trong thư mục Drive (dùng cho cả A và B)
 
-## 2. Lấy ảnh
+- ID thư mục lấy từ link cột O (`.../folders/<ID>`).
+- `search_files` với `parentId = '<ID>'`, `excludeContentSnippets: true`.
+- `download_file_content(fileId)`: file được lưu sẵn trên máy, kết quả ghi đường dẫn (`[Image: source: <path>]` với ảnh, `Binary content ... saved to <path>` với âm thanh, video). Copy file đó vào thư mục tạm.
 
-- Lấy ID thư mục từ link cột O (`.../folders/<ID>`).
-- `search_files` với `parentId = '<ID>' and mimeType contains 'image/'`, `excludeContentSnippets: true`.
-- `download_file_content` từng ảnh (tối đa 6 ảnh). Kết quả trả về đường dẫn file đã lưu trên máy (`[Image: source: <path>]`). Copy file đó vào thư mục dự án tạm, đặt tên `1.jpg`, `2.jpg`…
-- Xem ảnh: ảnh nào nền trắng (dùng `fit: "contain"`), ảnh nào lifestyle (`fit: "cover"`). Bỏ ảnh mờ, ảnh có chữ quảng cáo to, ảnh có mặt người lạ.
+---
 
-## 3. Viết kịch bản
+## Giai đoạn A: viết lời đọc (dòng `Đã chọn`)
 
-Mỗi video 5–8 cảnh, tổng khoảng 12–20 giây. Chọn 1 format:
+1. Dòng thiếu cột O: ghi R = "Cần thư mục ảnh", bỏ qua.
+2. Tải và xem ảnh (tối đa 6). Ảnh nền trắng thì sau này dùng `fit: "contain"`, ảnh lifestyle dùng `fit: "cover"`. Bỏ ảnh mờ, ảnh có chữ quảng cáo to, ảnh có mặt người lạ.
+3. Chọn format và viết **lời đọc** (xem mục "Kịch bản" bên dưới).
+4. Ghi vào Sheet:
+   - S = lời đọc (chỉ chữ, không ký hiệu, không emoji, để dán thẳng vào CapCut).
+   - M = `Chờ giọng`.
+   - R = `Chờ giọng từ dd/mm. Format: <tên format>.`
+5. Nếu trong thư mục **đã có sẵn** file âm thanh hoặc video, làm luôn giai đoạn B cho dòng đó.
+
+## Giai đoạn B: dựng video (dòng `Chờ giọng`)
+
+1. Tìm file âm thanh trong thư mục cột O: `mimeType contains 'audio/'` hoặc `mimeType contains 'video/'`. Nếu nhiều file, lấy file mới nhất.
+2. **Chưa có file:**
+   - Nếu R ghi "Chờ giọng từ dd/mm" và đã quá 2 ngày: dùng giọng dự phòng (mục "Giọng dự phòng"), ghi R thêm "Dùng giọng dự phòng HoaiMy".
+   - Nếu chưa quá 2 ngày: bỏ qua, nhắc trong báo cáo.
+3. **Có file:** tải về, chuẩn hóa thành `voice.mp3`:
+   ```
+   ffmpeg -y -i <file tải về> -vn -ac 1 -ar 44100 -b:a 160k voice.mp3
+   ```
+   (Lệnh này dùng được cho cả file video: chỉ lấy tiếng.) Bỏ khoảng lặng dài đầu và cuối nếu có:
+   ```
+   ffmpeg -y -i voice.mp3 -af "silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse" voice_trim.mp3 && mv voice_trim.mp3 voice.mp3
+   ```
+4. Tải ảnh, viết `video.json` theo kịch bản ở cột S: các cảnh đi theo thứ tự ý của lời đọc, chữ trên hình là **từ khóa** của từng đoạn (không cần trùng từng chữ, vì giọng tự thu có thể lệch kịch bản). Có `"audio": "voice.mp3"`, `"grade": "soft"`, `end_card` "Link sản phẩm ở giỏ hàng". Thời lượng cảnh tự kéo giãn theo giọng.
+5. Render và kiểm tra:
+   ```
+   python3 <repo>/tools/make_video.py <thư mục tạm>/video.json
+   ```
+   `ffprobe` phải có cả video và audio. Trích 3 khung hình (đầu, giữa, cuối), ghép lại và xem: chữ không tràn, sản phẩm rõ.
+6. Tải lên Drive: `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
+7. Ghi Sheet: P = link `viewUrl`, Q = caption, M = `Đã dựng`, R = "Đã dựng dd/mm, giọng: <file của chủ dự án | HoaiMy dự phòng>".
+
+---
+
+## Kịch bản
 
 | Format | Cấu trúc |
 |---|---|
@@ -29,44 +62,25 @@ Mỗi video 5–8 cảnh, tổng khoảng 12–20 giây. Chọn 1 format:
 | Quà tặng (mùa Tết/Valentine) | "Quà Tết cho bố mẹ" → sản phẩm → điểm đáng giá → CTA |
 | Sách: 1 ý tưởng | Câu hỏi → ý tưởng diễn đạt lại → bìa sách → CTA |
 
-- **Chữ trên hình:** mỗi cảnh ≤ 1 dòng, ≤ 6 từ. Cảnh đầu `text_style: "title"`.
-- **Lời đọc:** 35–60 từ, câu ngắn, giọng nhẹ nhàng, không phóng đại. Chỉ nói thông tin có trong mô tả sản phẩm (mở link cột C nếu cần đọc mô tả; nếu không mở được, chỉ nói điều thấy trên ảnh). Kết thúc bằng "Link sản phẩm ở giỏ hàng nhé."
+- **Lời đọc:** 35–60 từ (khoảng 12–20 giây), câu ngắn, giọng nhẹ nhàng, không phóng đại. Chỉ nói thông tin có trong mô tả sản phẩm (mở link cột C nếu cần; nếu không mở được, chỉ nói điều thấy trên ảnh). Kết thúc: "Link sản phẩm ở giỏ hàng nhé."
+- **Chữ trên hình:** mỗi cảnh ≤ 1 dòng, ≤ 6 từ. Cảnh đầu `text_style: "title"`. 5–8 cảnh.
+- **Caption:** 1–2 câu hook + 3–5 hashtag liên quan. Không hứa hẹn, không giá.
 - Tuân thủ toàn bộ quy tắc trong `CLAUDE.md`.
 
-## 4. Giọng đọc
+## Giọng dự phòng
 
-Theo thứ tự ưu tiên:
-
-1. **Có file âm thanh trong thư mục ảnh** (`voice.mp3`, `.m4a` hoặc `.wav`): tải về như ảnh và dùng luôn. Khi đó lời đọc là của chủ dự án; viết chữ trên hình cho khớp, không tạo giọng mới.
-2. **Google Cloud TTS** (miễn phí, không tốn credit), với giọng của kênh ghi trong `CLAUDE.md`:
-   ```
-   python3 <repo>/tools/tts_google.py say <giọng> voice.mp3 --text-file loi_doc.txt
-   ```
-3. **Dự phòng khi Google lỗi:** Creative Claw Azure HoaiMy (khoảng 1 credit):
-   ```
-   generate_speech(model="speech/azure-neural", voice_id="vi-VN-HoaiMyNeural", text=<lời đọc>)
-   check_job(job_id) → url;  curl -sSf -o voice.mp3 "<url>"
-   ```
-
-Không tạo lại giọng cho cùng một lời đọc. Nếu cả hai cách đều lỗi, ghi R và bỏ qua dòng đó.
-
-## 5. Render
-
-Viết `video.json` (xem docstring `tools/make_video.py`), có `"audio": "voice.mp3"`, `"grade": "soft"`, `end_card` với text "Link sản phẩm ở giỏ hàng". Thời lượng cảnh tự kéo giãn theo giọng đọc.
-
+Chỉ dùng theo bước B.2, và chỉ khi Creative Claw còn từ 10 credit trở lên:
 ```
-python3 <repo>/tools/make_video.py <thư mục tạm>/video.json
+generate_speech(model="speech/azure-neural", voice_id="vi-VN-HoaiMyNeural", text=<cột S>)
+check_job(job_id) → url;  curl -sSf -o voice.mp3 "<url>"
 ```
+Không tạo lại giọng cho cùng một lời đọc. Nếu lỗi, ghi R và bỏ qua dòng đó.
 
-Kiểm tra: `ffprobe` có cả video và audio; trích 3 khung hình (đầu, giữa, cuối), ghép lại và xem để chắc chữ không tràn, sản phẩm rõ.
+(`tools/tts_google.py` dành cho Google Cloud TTS khi chủ dự án có khóa API; hiện chưa cấu hình.)
 
-## 6. Tải lên Drive và cập nhật Sheet
+## Báo cáo
 
-- `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
-- Ghi vào dòng sản phẩm: P = link `viewUrl`, Q = caption, M = `Đã dựng`, R = tóm tắt ngắn (format đã dùng).
-
-**Caption:** 1–2 câu hook + 3–5 hashtag liên quan (`#decortet #nhadep #canho` …). Không hứa hẹn, không giá.
-
-## 7. Báo cáo
-
-Liệt kê video đã dựng (tên, link Drive), dòng bị bỏ qua và lý do, số credit còn lại. Nhắc chủ dự án khi đăng: thêm nhạc thịnh hành, bật nhãn nội dung AI, gắn giỏ hàng, rồi đổi M sang `Đã đăng`.
+- Lời đọc mới đã viết: tên sản phẩm, kênh. Nhắc chủ dự án: mở cột S, tạo giọng (CapCut hoặc tự thu), bỏ file vào thư mục ảnh của sản phẩm.
+- Video đã dựng: tên, link Drive, nguồn giọng.
+- Dòng đang chờ giọng và số ngày đã chờ.
+- Nhắc khi đăng: thêm nhạc thịnh hành (âm lượng nhỏ, khoảng 10–20%), bật nhãn nội dung AI nếu dùng giọng hoặc hình AI, gắn giỏ hàng, đổi M sang `Đã đăng`.

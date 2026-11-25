@@ -15,21 +15,25 @@ Chủ dự án làm việc bằng tiếng Việt. Mọi nội dung (kịch bản
 
 ### Cột của mỗi tab kênh (hàng 1 là tiêu đề, dữ liệu từ hàng 2)
 
-A Ngày thêm · B Tên sản phẩm · C Link · D Nguồn · E Giá (đ) · F Hoa hồng (%) · **G Hoa hồng/đơn (công thức, không ghi đè)** · H Lượt bán · I Số sao · J Kho trong nước · K Ảnh/video đẹp · **L Điểm (công thức, không ghi đè)** · M Trạng thái · N Ghi chú (của chủ dự án, không sửa) · O Thư mục ảnh (link Drive) · P Video (Claude điền) · Q Caption (Claude điền) · R Nhận xét của Claude (Claude điền)
+A Ngày thêm · B Tên sản phẩm · C Link · D Nguồn · E Giá (đ) · F Hoa hồng (%) · **G Hoa hồng/đơn (công thức, không ghi đè)** · H Lượt bán · I Số sao · J Kho trong nước · K Ảnh/video đẹp · **L Điểm (công thức, không ghi đè)** · M Trạng thái · N Ghi chú (của chủ dự án, không sửa) · O Thư mục ảnh (link Drive) · P Video (Claude điền) · Q Caption (Claude điền) · R Nhận xét của Claude (Claude điền) · S Lời đọc (Claude viết, chủ dự án tạo giọng)
 
-Trạng thái (cột M): `Chờ duyệt` → `Đã chọn` → `Đã dựng` → `Đã đăng`, hoặc `Loại`.
+Trạng thái (cột M): `Chờ duyệt` → `Đã chọn` → `Chờ giọng` → `Đã dựng` → `Đã đăng`, hoặc `Loại`.
+
+## Giọng đọc: chủ dự án tự tạo file âm thanh
+
+Chủ dự án tạo giọng bằng CapCut Pro, công cụ khác, hoặc tự thu giọng mình, rồi bỏ file âm thanh (`.mp3`, `.m4a`, `.wav`, hoặc video `.mp4`/`.mov` để tách tiếng) vào **thư mục ảnh của sản phẩm** (cột O). Agent viết lời đọc ở cột S, chờ file, rồi dựng video khớp với file đó.
+
+Dự phòng: dòng ở `Chờ giọng` quá **2 ngày** mà chưa có file thì dựng bằng giọng Azure `vi-VN-HoaiMyNeural` qua Creative Claw (khoảng 1 credit) và ghi rõ ở cột R.
 
 Sheet dùng locale vi_VN: **công thức ngăn cách bằng dấu `;`**, số thập phân dùng dấu phẩy khi hiển thị.
 
 ## Ba kênh
 
-| Kênh | Định vị | Giọng đọc | Ghi chú |
-|---|---|---|---|
-| Nhà đẹp | Decor, gia dụng, nhà cửa tối giản | `vi-VN-HoaiMyNeural` (Azure, nữ miền Bắc) | Mùa Tết: decor Tết, bếp Tết, quà Tết |
-| Phụ kiện | Túi, đồ da, trang sức tối giản, khăn, kính | `vi-VN-HoaiMyNeural` | Quà Tết, Valentine 14/02 |
-| Sách | Diễn đạt lại 1 ý tưởng của sách, sách làm quà | `vi-VN-HoaiMyNeural` (tạm thời) | Chỉ shop chính hãng |
-
-Nếu chủ dự án nhân bản giọng, ghi `character_id` vào đây và dùng `speech/cartesia-sonic` với `extras.language_code: "vi"`.
+| Kênh | Định vị | Ghi chú |
+|---|---|---|
+| Nhà đẹp | Decor, gia dụng, nhà cửa tối giản | Mùa Tết: decor Tết, bếp Tết, quà Tết |
+| Phụ kiện | Túi, đồ da, trang sức tối giản, khăn, kính | Quà Tết, Valentine 14/02 |
+| Sách | Diễn đạt lại 1 ý tưởng của sách, sách làm quà | Chỉ shop chính hãng |
 
 ## Gu hình ảnh và chữ
 
@@ -57,8 +61,8 @@ Căn cứ: Luật Quảng cáo sửa đổi số 75/2025/QH15 (hiệu lực 01/0
 Chạy lần lượt hai skill:
 
 1. `.claude/skills/chon-san-pham/SKILL.md`: đánh giá các dòng `Chờ duyệt`.
-2. `.claude/skills/dung-video/SKILL.md`: dựng video cho các dòng `Đã chọn`.
+2. `.claude/skills/dung-video/SKILL.md`: viết lời đọc cho dòng `Đã chọn`; dựng video cho dòng `Chờ giọng` đã có file âm thanh.
 
-Giới hạn mỗi lần chạy: tối đa **3 video mỗi kênh**, tổng tối đa 9. Mỗi video giọng Azure tốn khoảng 1 credit Creative Claw. Nếu còn dưới 10 credit, dừng dựng và báo.
+Giới hạn mỗi lần chạy: tối đa **3 video mỗi kênh**, tổng tối đa 9. Giọng dự phòng Azure tốn khoảng 1 credit Creative Claw. Nếu còn dưới 10 credit, không dùng giọng dự phòng và báo.
 
 Kết thúc mỗi lần chạy bằng báo cáo ngắn: đã đánh giá bao nhiêu sản phẩm, đã dựng video nào (kèm link Drive), lỗi gì, chủ dự án cần làm gì tiếp.
