@@ -49,7 +49,7 @@ description: Quy trình 2 giai đoạn cho Google Sheet affiliate. Giai đoạn 
    ```
    `ffprobe` phải có cả video và audio. Trích 3 khung hình (đầu, giữa, cuối), ghép lại và xem: chữ không tràn, sản phẩm rõ.
 6. Tải lên Drive **file `<output>_drive.mp4`** (720p, dưới 3 MB, do công cụ tự xuất; connector giới hạn khoảng 3 MB). Nếu bản này vẫn trên 3 MB, chạy lại với `"drive_max_mb": 2.6`.
-   `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
+   `sha256sum <output>_drive.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
 7. Ghi Sheet: P = link `viewUrl`, Q = caption, M = `Đã dựng`, R = "Đã dựng dd/mm, giọng: <file của chủ dự án | HoaiMy dự phòng>".
 
 ---
