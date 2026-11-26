@@ -42,30 +42,52 @@ description: Quy trình 2 giai đoạn cho Google Sheet affiliate. Giai đoạn 
    ```
    ffmpeg -y -i voice.mp3 -af "silenceremove=start_periods=1:start_threshold=-45dB,areverse,silenceremove=start_periods=1:start_threshold=-45dB,areverse" voice_trim.mp3 && mv voice_trim.mp3 voice.mp3
    ```
-4. Tải ảnh, viết `video.json` theo kịch bản ở cột S: các cảnh đi theo thứ tự ý của lời đọc, chữ trên hình là **từ khóa** của từng đoạn (không cần trùng từng chữ, vì giọng tự thu có thể lệch kịch bản). Có `"audio": "voice.mp3"`, `"grade": "soft"`, `end_card` "Link sản phẩm ở giỏ hàng". Thời lượng cảnh tự kéo giãn theo giọng.
+4. Tải ảnh, viết `video.json` theo mục "Kịch bản" bên dưới: các cảnh đi theo thứ tự ý của lời đọc, `"audio": "voice.mp3"`, `"script"` = cột S, `"hook"` = câu trong R. Thời lượng cảnh và phụ đề tự khớp giọng (phụ đề căn theo khoảng lặng). Nếu chủ dự án đọc lệch kịch bản nhiều, ghi R để chủ dự án sửa cột S rồi dựng lại.
 5. Render và kiểm tra:
    ```
    python3 <repo>/tools/make_video.py <thư mục tạm>/video.json
    ```
    `ffprobe` phải có cả video và audio. Trích 3 khung hình (đầu, giữa, cuối), ghép lại và xem: chữ không tràn, sản phẩm rõ.
-6. Tải lên Drive: `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
+6. **Giới hạn:** connector Drive chỉ nhận khoảng 3 MB mỗi lần tải lên; video dựng ra thường 10–15 MB. Nếu file lớn hơn 3 MB, không tải lên; ghi R = "Đã dựng, file quá lớn để tải lên Drive" và báo chủ dự án (đang chờ chủ dự án chọn cách xử lý).
+   Tải lên Drive (khi file ≤ 3 MB): `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
 7. Ghi Sheet: P = link `viewUrl`, Q = caption, M = `Đã dựng`, R = "Đã dựng dd/mm, giọng: <file của chủ dự án | HoaiMy dự phòng>".
 
 ---
 
 ## Kịch bản
 
-| Format | Cấu trúc |
-|---|---|
-| Hook ảnh đẹp | Cảnh lifestyle đẹp nhất + 1 dòng hook → chi tiết sản phẩm → công dụng/cách dùng thật → cảnh đẹp + CTA |
-| Câu hỏi | "Phòng nhỏ có nên…?" → sản phẩm → lý do → CTA |
-| Quà tặng (mùa Tết/Valentine) | "Quà Tết cho bố mẹ" → sản phẩm → điểm đáng giá → CTA |
-| Sách: 1 ý tưởng | Câu hỏi → ý tưởng diễn đạt lại → bìa sách → CTA |
+Hai format đã được duyệt (xem `CLAUDE.md`, mục "Phong cách kênh affiliate"):
 
-- **Lời đọc:** 35–60 từ (khoảng 12–20 giây), câu ngắn, giọng nhẹ nhàng, không phóng đại. Chỉ nói thông tin có trong mô tả sản phẩm (mở link cột C nếu cần; nếu không mở được, chỉ nói điều thấy trên ảnh). Kết thúc: "Link sản phẩm ở giỏ hàng nhé."
-- **Chữ trên hình:** mỗi cảnh ≤ 1 dòng, ≤ 6 từ. Cảnh đầu `text_style: "title"`. 5–8 cảnh.
-- **Caption:** 1–2 câu hook + 3–5 hashtag liên quan. Không hứa hẹn, không giá.
-- Tuân thủ toàn bộ quy tắc trong `CLAUDE.md`.
+| Format | Cấu trúc | Ví dụ mở đầu |
+|---|---|---|
+| **A – Nỗi đau** (mặc định) | Tình huống khó chịu cụ thể → sản phẩm giải quyết, nêu chi tiết thấy được → size/dịp dùng → CTA | "Trời lạnh mà cho con gái mặc áo phao thì tròn như cục bông, chụp ảnh chẳng thấy dáng đâu." |
+| **C – Gấp theo mùa** (khi còn ≥ 5 ngày tới Noel, Tết, 14/02…) | Mốc thời gian + câu hỏi → một sản phẩm dùng được cho dịp → CTA | "Còn chưa đầy một tháng nữa là Noel, đồ cho con gái đã có chưa các mẹ?" |
+| Sách: 1 ý tưởng | Câu hỏi đời thường → ý tưởng diễn đạt lại → vì sao nên đọc → CTA | (chưa duyệt, đưa phương án trước) |
+
+Định dạng mới ngoài bảng trên: **không tự áp dụng**, ghi R = "Đề xuất format mới, chờ duyệt" kèm 2–3 phương án.
+
+**Lời đọc: nói như người thật chia sẻ với người thật.**
+- Câu đầu là một tình huống hoặc câu hỏi người xem gật đầu ngay. Không mở bằng tên sản phẩm.
+- Dùng từ nói của người mua (giọng Bắc): "các mẹ", "nhé", "hẳn", "chẳng", "là có đồ rồi". Không dùng từ mô tả kiểu catalogue ("thiết kế tinh tế", "chất liệu cao cấp", "sang trọng").
+- Mỗi lợi ích gắn với một chi tiết nhìn thấy trên ảnh (nơ, cổ bèo, chất dạ…).
+- Có một lý do mua ngay có thật (mùa, dịp, thời tiết). Không bịa khan hiếm ("sắp hết hàng").
+- Không nói "mình mua/dùng rồi" nếu chủ dự án chưa thực sự dùng. Dùng "Có set này các mẹ xem nhé".
+- 35–65 từ (12–20 giây). Kết thúc bằng CTA tự nhiên: "Mẹ nào cần thì xem ở giỏ hàng nhé."
+- Chỉ nói thông tin có trong mô tả sản phẩm hoặc thấy trên ảnh. Không giá (đến khi được duyệt).
+
+**Tự kiểm trước khi ghi Sheet** (thiếu 1 ý thì viết lại):
+1. Đọc to câu đầu: người xem có dừng lướt không?
+2. Có câu nào nghe như quảng cáo hoặc AI viết không?
+3. Có nỗi đau hoặc lý do mua ngay cụ thể không?
+4. Có câu nào sai sự thật hoặc phóng đại không?
+
+**Hook trên hình:** ≤ 8 từ, rút từ câu đầu, ghi vào R dạng `Hook: "..."`.
+
+**video.json:** `style: "sale"`, `script` = cột S, `hook` = câu hook, 9–13 cảnh 0,7–1,2 giây, xen cảnh toàn và cảnh cận `focus: [cx, cy, 1.1–1.5]`. Cảnh đầu là ảnh đẹp nhất. `end_card` "Xem ở giỏ hàng". Không ghi `text` cho cảnh (phụ đề tự chạy).
+
+**Caption:** 1–2 câu nối tiếp hook + 3–5 hashtag liên quan. Không hứa hẹn, không giá.
+
+Tuân thủ toàn bộ quy tắc trong `CLAUDE.md`.
 
 ## Giọng dự phòng
 

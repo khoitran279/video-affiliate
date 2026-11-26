@@ -35,13 +35,24 @@ Sheet dùng locale vi_VN: **công thức ngăn cách bằng dấu `;`**, số th
 | Phụ kiện | Túi, đồ da, trang sức tối giản, khăn, kính | Quà Tết, Valentine 14/02 |
 | Sách | Diễn đạt lại 1 ý tưởng của sách, sách làm quà | Chỉ shop chính hãng |
 
-## Gu hình ảnh và chữ
+## Phong cách kênh affiliate (KHÔNG dùng gu thương hiệu cá nhân)
 
-- Tông trung tính, trầm: bê tông, đá, gỗ, đen–trắng, ánh sáng tự nhiên. Giảm bão hòa nhẹ.
-- Một điểm nhấn màu (đỏ Tết, đỏ cam) cho một chi tiết, không lặp lại thành hệ thống.
-- Chữ: mỗi cảnh tối đa **1 dòng**, ngắn, serif hoặc sans mảnh. Không sticker, không chữ màu lớn.
-- Nhịp nhanh: 1–1,5 giây/cảnh. Chuyển cảnh bằng chuyển động, không hiệu ứng lòe loẹt.
+Các kênh affiliate tách biệt hoàn toàn với thương hiệu cá nhân bất động sản của chủ dự án. Gu "tông trầm, chữ ít và mảnh" trong cài đặt cá nhân **không áp dụng** ở đây. Mục tiêu duy nhất: giữ người xem và ra đơn.
+
+- **Giây đầu:** hook to, rõ, đặt ở 1/4 trên màn hình (chữ đậm trên khối trắng). Hình đầu là cảnh sản phẩm đẹp nhất.
+- **Phụ đề chạy theo giọng** suốt video (chữ trắng đậm viền đen). Truyền `script` vào `make_video.py`.
+- **Màu theo hàng thật:** `grade: "true"`, chỉ tăng tương phản và độ nét. Không giảm bão hòa.
+- **Nhịp:** 0,7–1,2 giây/cảnh, 9–13 cảnh. Xen cảnh toàn với cảnh cận chi tiết (`focus`): nơ, cổ áo, chất vải, đường may.
+- Chuyển cảnh bằng chuyển động (zoom punch). Không sticker, không hiệu ứng lòe loẹt.
+- Thẻ cuối: "Xem ở giỏ hàng" có mũi tên chỉ xuống.
 - Video 9:16, 1080×1920, 12–25 giây.
+- **Trước khi tự động hóa một định dạng mới:** đưa chủ dự án xem 2–3 phương án (kịch bản và bản nháp) để chọn.
+
+### Kịch bản đã duyệt (26/11/2026)
+
+- **A – Nỗi đau:** mở bằng tình huống khó chịu có thật của người mua → sản phẩm giải quyết thế nào (chi tiết thấy được) → thông tin chọn mua (size, dịp dùng) → CTA.
+- **C – Gấp theo mùa:** mở bằng mốc thời gian thật (Noel, Tết, 14/02) + câu hỏi → một sản phẩm dùng được cho dịp đó → CTA. Chỉ dùng khi mốc còn ≥ 5 ngày.
+- B – Giá (chưa duyệt): không dùng cho đến khi chủ dự án cho phép.
 
 ## Quy tắc bắt buộc (pháp lý và chính sách)
 

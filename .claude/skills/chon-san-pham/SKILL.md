@@ -14,7 +14,7 @@ description: Đánh giá các sản phẩm ở trạng thái "Chờ duyệt" tro
 3. Với mỗi dòng, đánh giá theo thứ tự:
    - **Loại ngay** nếu vi phạm quy tắc 4 trong `CLAUDE.md` (hàng nhái, sách lậu, hàng cấm). Đặt M = `Loại`, R = lý do ngắn.
    - **Điểm cột L** (công thức tự tính): 4–5 là tốt.
-   - **Hợp gu kênh** (tông trung tính, tối giản) dựa vào tên sản phẩm và, nếu có, ảnh trong thư mục cột O.
+   - **Hợp định vị kênh** (bảng "Ba kênh" trong `CLAUDE.md`) và **dễ bán qua video**: có nỗi đau hoặc dịp dùng rõ, ảnh shop đủ đẹp để cắt cận chi tiết. Dựa vào tên sản phẩm và, nếu có, ảnh trong thư mục cột O.
    - **Mùa vụ:** trước Tết (đến khoảng 25/01) ưu tiên decor Tết, quà Tết, bếp Tết. Sau 15/01 chỉ ưu tiên hàng có kho trong nước (cột J = `Có`).
    - **Thiếu ảnh:** nếu cột O trống, ghi R = "Cần thư mục ảnh".
 4. Ghi cột R một câu: kết luận + lý do, ví dụ: `Nên làm: 5 điểm, hợp decor Tết, hoa hồng 30.000đ/đơn.` hoặc `Chưa nên: 4,6 sao, ảnh shop mờ.`
