@@ -40,12 +40,13 @@ Sheet dùng locale vi_VN: **công thức ngăn cách bằng dấu `;`**, số th
 Các kênh affiliate tách biệt hoàn toàn với thương hiệu cá nhân bất động sản của chủ dự án. Gu "tông trầm, chữ ít và mảnh" trong cài đặt cá nhân **không áp dụng** ở đây. Mục tiêu duy nhất: giữ người xem và ra đơn.
 
 - **Giây đầu:** hook to, rõ, đặt ở 1/4 trên màn hình (chữ đậm trên khối trắng). Hình đầu là cảnh sản phẩm đẹp nhất.
-- **Phụ đề chạy theo giọng** suốt video (chữ trắng đậm viền đen). Truyền `script` vào `make_video.py`.
+- **Phụ đề chạy theo giọng** suốt video (chữ trắng viền đen, tối đa 2 dòng chia đều). Truyền `script` vào `make_video.py`.
+- **Font hook và phụ đề: UTM Impact** (chủ dự án chọn 26/11). Công cụ dùng `tools/fonts/UTM-Impact.ttf` nếu có; chưa có thì dùng Anton (kiểu Impact, miễn phí).
 - **Màu theo hàng thật:** `grade: "true"`, chỉ tăng tương phản và độ nét. Không giảm bão hòa.
-- **Nhịp:** 0,7–1,2 giây/cảnh, 9–13 cảnh. Xen cảnh toàn với cảnh cận chi tiết (`focus`): nơ, cổ áo, chất vải, đường may.
+- **Nhịp vừa (chủ dự án chọn 26/11):** 1,8–2,2 giây/cảnh, 6–9 cảnh. Xen cảnh toàn với cảnh cận chi tiết (`focus`): nơ, cổ áo, chất vải, đường may.
 - Chuyển cảnh bằng chuyển động (zoom punch). Không sticker, không hiệu ứng lòe loẹt.
 - Thẻ cuối: "Xem ở giỏ hàng" có mũi tên chỉ xuống.
-- Video 9:16, 1080×1920, 12–25 giây.
+- Video 9:16, bản gốc 1080×1920, 12–25 giây. Bản tải lên Drive là `*_drive.mp4` (720×1280, dưới 3 MB, công cụ tự xuất) vì connector Drive giới hạn khoảng 3 MB mỗi lần.
 - **Trước khi tự động hóa một định dạng mới:** đưa chủ dự án xem 2–3 phương án (kịch bản và bản nháp) để chọn.
 
 ### Kịch bản đã duyệt (26/11/2026)

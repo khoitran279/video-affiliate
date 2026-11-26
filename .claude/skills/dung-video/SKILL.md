@@ -48,8 +48,8 @@ description: Quy trình 2 giai đoạn cho Google Sheet affiliate. Giai đoạn 
    python3 <repo>/tools/make_video.py <thư mục tạm>/video.json
    ```
    `ffprobe` phải có cả video và audio. Trích 3 khung hình (đầu, giữa, cuối), ghép lại và xem: chữ không tràn, sản phẩm rõ.
-6. **Giới hạn:** connector Drive chỉ nhận khoảng 3 MB mỗi lần tải lên; video dựng ra thường 10–15 MB. Nếu file lớn hơn 3 MB, không tải lên; ghi R = "Đã dựng, file quá lớn để tải lên Drive" và báo chủ dự án (đang chờ chủ dự án chọn cách xử lý).
-   Tải lên Drive (khi file ≤ 3 MB): `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
+6. Tải lên Drive **file `<output>_drive.mp4`** (720p, dưới 3 MB, do công cụ tự xuất; connector giới hạn khoảng 3 MB). Nếu bản này vẫn trên 3 MB, chạy lại với `"drive_max_mb": 2.6`.
+   `sha256sum out.mp4`, rồi `create_file` với `parentId: "1tPGwiNV9KwqkO9Rg777NwdrELaLc2Z0C"`, `contentMimeType: "video/mp4"`, `disableConversionToGoogleType: true`, `base64Content: "sha256:<hash>:<đường dẫn tuyệt đối>"`, `title: "<Kênh> - <Tên ngắn> - <dd.mm>.mp4"`.
 7. Ghi Sheet: P = link `viewUrl`, Q = caption, M = `Đã dựng`, R = "Đã dựng dd/mm, giọng: <file của chủ dự án | HoaiMy dự phòng>".
 
 ---
@@ -83,7 +83,7 @@ Hai format đã được duyệt (xem `CLAUDE.md`, mục "Phong cách kênh affi
 
 **Hook trên hình:** ≤ 8 từ, rút từ câu đầu, ghi vào R dạng `Hook: "..."`.
 
-**video.json:** `style: "sale"`, `script` = cột S, `hook` = câu hook, 9–13 cảnh 0,7–1,2 giây, xen cảnh toàn và cảnh cận `focus: [cx, cy, 1.1–1.5]`. Cảnh đầu là ảnh đẹp nhất. `end_card` "Xem ở giỏ hàng". Không ghi `text` cho cảnh (phụ đề tự chạy).
+**video.json:** `style: "sale"`, `script` = cột S, `hook` = câu hook, 6–9 cảnh 1,8–2,2 giây, xen cảnh toàn và cảnh cận `focus: [cx, cy, 1.1–1.5]`. Cảnh đầu là ảnh đẹp nhất. `end_card` "Xem ở giỏ hàng". Không ghi `text` cho cảnh (phụ đề tự chạy).
 
 **Caption:** 1–2 câu nối tiếp hook + 3–5 hashtag liên quan. Không hứa hẹn, không giá.
 

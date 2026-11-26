@@ -25,6 +25,8 @@ fit:    auto | cover | contain | blur
         (auto: nền trắng -> contain; ảnh vuông/ngang -> blur; ảnh dọc -> cover)
 focus:  [cx, cy, zoom] — cắt cận một vùng của ảnh (tọa độ 0..1), zoom 1.0–1.6.
         Ảnh shop thường chỉ 800px: zoom > 1.6 sẽ vỡ.
+drive_max_mb: mặc định 2.9 — xuất thêm <output>_drive.mp4 (720p, dưới 3 MB) để tải lên Drive; 0 để tắt.
+Font hook/phụ đề: UTM Impact nếu có file trong tools/fonts/ (UTM-Impact.ttf), nếu không dùng Anton.
 Phụ đề: có "script" thì tự chia câu, căn thời gian theo độ dài và khoảng lặng của giọng.
         Khi có phụ đề, trường "text" của từng cảnh bị bỏ qua.
 """
@@ -44,6 +46,12 @@ FONTS = {
     "price": os.path.join(HERE, "fonts", "BeVietnamPro-Regular.ttf"),
     "bold": os.path.join(HERE, "fonts", "BeVietnamPro-ExtraBold.ttf"),
 }
+# Font hook/phụ đề kiểu Impact: ưu tiên UTM Impact nếu chủ dự án đã thêm file vào tools/fonts/
+# (font thương mại, cần bản quyền), nếu không dùng Anton (OFL, có dấu tiếng Việt).
+for _name in ("UTM-Impact.ttf", "UTM Impact.ttf", "UTMImpact.ttf", "Anton-Regular.ttf"):
+    if os.path.exists(os.path.join(HERE, "fonts", _name)):
+        FONTS["impact"] = os.path.join(HERE, "fonts", _name)
+        break
 SIZES = {"title": 66, "caption": 48, "price": 50}
 OVERSCAN = 1.18  # ảnh lớn hơn khung để còn chỗ zoom/pan
 
@@ -231,16 +239,27 @@ def wrap(draw, text, font, maxw):
     return lines
 
 
-def bold_block(text, size, cy, maxw, boxed=False, stroke=7):
+def bold_block(text, size, cy, maxw, boxed=False, stroke=7, face="impact"):
     """Chữ đậm, căn giữa, tối đa 3 dòng. boxed: chữ tối trên khối trắng bo góc (kiểu chữ TikTok)."""
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    font = ImageFont.truetype(FONTS["bold"], size)
+    face = FONTS.get(face, FONTS["bold"])
+    font = ImageFont.truetype(face, size)
     lines = wrap(d, text, font, maxw)
+    if len(lines) > 1:  # chia đều các dòng, tránh một chữ rớt xuống dòng cuối
+        n = len(lines)
+        target = d.textlength(text, font=font) / n
+        lo = target
+        while lo <= maxw:
+            cand = wrap(d, text, font, lo)
+            if len(cand) <= n:
+                lines = cand
+                break
+            lo += 8
     while len(lines) > 3 and font.size > 40:
-        font = ImageFont.truetype(FONTS["bold"], font.size - 4)
+        font = ImageFont.truetype(face, font.size - 4)
         lines = wrap(d, text, font, maxw)
-    lh = int(font.size * 1.28)
+    lh = int(font.size * 1.32)
     top = int(cy - lh * len(lines) / 2)
     for k, ln in enumerate(lines):
         tw = d.textlength(ln, font=font)
@@ -261,7 +280,7 @@ def bold_block(text, size, cy, maxw, boxed=False, stroke=7):
 
 
 def end_card_layer(text):
-    layer = bold_block(text, 76, H * 0.60, W * 0.80, boxed=True)
+    layer = bold_block(text, 96, H * 0.60, W * 0.80, boxed=True)
     d = ImageDraw.Draw(layer)
     cx, y = W / 2, H * 0.60 + 90  # mũi tên chỉ xuống giỏ hàng
     d.polygon([(cx - 38, y), (cx + 38, y), (cx, y + 44)], fill=(255, 255, 255, 245))
@@ -369,7 +388,7 @@ def render(cfg_path):
     subs = subtitle_track(script, speech, audio_path) if subs_on else []
     sub_cache = {}
     hook = cfg.get("hook")
-    hook_layer = bold_block(hook["text"], 84, H * 0.25, W * 0.82, boxed=True) if hook else None
+    hook_layer = bold_block(hook["text"], 104, H * 0.25, W * 0.82, boxed=True) if hook else None
     hook_dur = hook.get("duration", 2.2) if hook else 0
 
     silent = out + ".silent.mp4"
@@ -417,7 +436,7 @@ def render(cfg_path):
                 cur = next((s_ for s_ in subs if s_[0] <= now < s_[1]), None)
                 if cur:
                     if cur[2] not in sub_cache:
-                        sub_cache[cur[2]] = bold_block(cur[2], 66, H * 0.66, W * 0.78)
+                        sub_cache[cur[2]] = bold_block(cur[2], 84, H * 0.66, W * 0.78)
                     fr = Image.alpha_composite(fr, sub_cache[cur[2]])
             if hook_layer is not None and now < hook_dur:
                 # bật ra: phóng từ 85% lên 100% trong 5 khung đầu
@@ -441,6 +460,24 @@ def render(cfg_path):
         os.remove(silent)
     else:
         os.replace(silent, out)
+    max_mb = cfg.get("drive_max_mb", 2.9)
+    if max_mb:  # bản nhẹ 720p để tải lên Drive (connector giới hạn ~3 MB)
+        drive_out = out[:-4] + "_drive.mp4"
+        dur = gframe / fps
+        vbit = int((max_mb * 8 * 1024 * 1024 * 0.94) / dur - (96000 if audio_path else 0))
+        common = ["-vf", "scale=720:1280:flags=lanczos", "-c:v", "libx264", "-preset", "slow",
+                  "-b:v", str(vbit), "-maxrate", str(int(vbit * 1.3)), "-bufsize", str(vbit * 2),
+                  "-pix_fmt", "yuv420p"]
+        log = out + ".2pass"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", out] + common +
+                       ["-pass", "1", "-passlogfile", log, "-an", "-f", "mp4", os.devnull], check=True)
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", out] + common +
+                       ["-pass", "2", "-passlogfile", log, "-c:a", "aac", "-b:a", "96k",
+                        "-movflags", "+faststart", drive_out], check=True)
+        for f_ in os.listdir(os.path.dirname(out)):
+            if f_.startswith(os.path.basename(log)):
+                os.remove(os.path.join(os.path.dirname(out), f_))
+        print(f"Bản Drive: {drive_out} ({os.path.getsize(drive_out) / 1048576:.2f} MB)")
     print(f"Đã xuất: {out} ({gframe / fps:.1f}s, {len(scenes)} cảnh, {len(subs)} dòng phụ đề)")
 
 
